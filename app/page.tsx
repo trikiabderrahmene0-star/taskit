@@ -164,6 +164,39 @@ export default function Home() {
     setOnglets(nouveauxOnglets);
   };
 
+  const supprimerExercice = (e: React.MouseEvent, idToRemove: number) => {
+    e.stopPropagation(); // Évite de sélectionner l'exercice quand on clique sur supprimer
+    const nouveauxOnglets = onglets.map(onglet => {
+      if (onglet.id === ongletActifId) {
+        const nouveauxExercices = onglet.exercices.filter(ex => ex.id !== idToRemove);
+        // Si on supprime l'exercice actif, on bascule sur un autre
+        const nouvelActif = onglet.exerciceActifId === idToRemove
+          ? (nouveauxExercices.length > 0 ? nouveauxExercices[0].id : 0)
+          : onglet.exerciceActifId;
+        return { ...onglet, exercices: nouveauxExercices, exerciceActifId: nouvelActif };
+      }
+      return onglet;
+    });
+    setOnglets(nouveauxOnglets);
+  };
+
+  const deplacerExercice = (e: React.MouseEvent, index: number, direction: 'up' | 'down') => {
+    e.stopPropagation();
+    const nouveauxOnglets = onglets.map(onglet => {
+      if (onglet.id === ongletActifId) {
+        const nouveauxExos = [...onglet.exercices];
+        if (direction === 'up' && index > 0) {
+          [nouveauxExos[index - 1], nouveauxExos[index]] = [nouveauxExos[index], nouveauxExos[index - 1]];
+        } else if (direction === 'down' && index < nouveauxExos.length - 1) {
+          [nouveauxExos[index + 1], nouveauxExos[index]] = [nouveauxExos[index], nouveauxExos[index + 1]];
+        }
+        return { ...onglet, exercices: nouveauxExos };
+      }
+      return onglet;
+    });
+    setOnglets(nouveauxOnglets);
+  };
+  
   const ajouterExercice = () => {
     const nouveauxOnglets = onglets.map(onglet => {
       if (onglet.id === ongletActifId) {
@@ -546,25 +579,44 @@ export default function Home() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10">
-              {ongletActif.exercices.map((exo) => (
-                <div 
-                  key={exo.id} 
-                  onClick={() => modifierOngletActif({ exerciceActifId: exo.id })}
-                  className={`p-3 rounded-lg cursor-pointer border-2 transition-all ${
-                    ongletActif.exerciceActifId === exo.id 
-                    ? 'bg-white border-blue-400 shadow-md transform scale-105 relative z-20' 
-                    : 'bg-white/50 border-transparent hover:bg-white hover:border-gray-200'
-                  }`}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-gray-700 truncate">{exo.titre}</span>
-                    <span className="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-1 rounded-full">{exo.points} pts</span>
+              {ongletActif.exercices.map((exo, index) => (
+              <div 
+                key={exo.id} 
+                onClick={() => modifierOngletActif({ exerciceActifId: exo.id })}
+                className={`p-3 rounded-lg cursor-pointer border-2 transition-all group ${
+                  ongletActif.exerciceActifId === exo.id 
+                  ? 'bg-white border-blue-400 shadow-md transform scale-105 relative z-20' 
+                  : 'bg-white/50 border-transparent hover:bg-white hover:border-gray-200'
+                }`}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-bold text-gray-700 truncate">{exo.titre}</span>
+                  
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-1 rounded-full">
+                      {exo.points} pts
+                    </span>
+                    
+                    {/* Boutons de déplacement et suppression */}
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex flex-col">
+                        <button onClick={(e) => deplacerExercice(e, index, 'up')} className="text-gray-400 hover:text-blue-600 text-[10px] leading-none">▲</button>
+                        <button onClick={(e) => deplacerExercice(e, index, 'down')} className="text-gray-400 hover:text-blue-600 text-[10px] leading-none">▼</button>
+                      </div>
+                      <button 
+                        onClick={(e) => supprimerExercice(e, exo.id)}
+                        className="text-red-400 hover:text-white hover:bg-red-500 rounded-full w-5 h-5 flex items-center justify-center font-bold text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
-                  {ongletActif.modeMatiere === "multiple" && (
-                    <div className="text-xs text-gray-500 font-semibold truncate">{exo.matiere}</div>
-                  )}
                 </div>
-              ))}
+                {ongletActif.modeMatiere === "multiple" && (
+                  <div className="text-xs text-gray-500 font-semibold truncate">{exo.matiere}</div>
+                )}
+              </div>
+            ))}
             </div>
           </aside>
 
